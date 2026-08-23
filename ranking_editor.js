@@ -1,83 +1,14 @@
 (function(){
-  function n(v){const x=Number(v);return Number.isFinite(x)?x:99;}
-  function saveNow(){if(typeof save==='function')save();}
-
-  // Manual editor for both divisional rankings and P4P.
-  window.openRankingEditor=function(){
-    if(typeof weight==='undefined')return;
-    if(weight==='P4P'){
-      const fighters=p4p();
-      const html=`<h2>✎ Редактор P4P</h2><div class="muted">Меняй только позицию P4P. Рекорды, серии, чемпионства и защиты не изменяются.</div>${fighters.map((f,i)=>{const source=F.find(x=>x.name.trim().toLowerCase()===f.name.trim().toLowerCase());return `<div class="card" style="margin-top:8px"><b>${flag(source||f)} ${f.name}</b><label>P4P позиция</label><input id="p4p_${encodeURIComponent(f.name)}" type="number" min="1" max="999" value="${n(f.p4pRank||i+1)}"></div>`}).join('')}<button class="primary" onclick="saveP4PEditor()">СОХРАНИТЬ P4P</button>`;
-      document.getElementById('modalContent').innerHTML=html;
-      document.getElementById('modal').classList.add('show');
-      return;
-    }
-    const fighters=F.filter(f=>f.weight===weight).slice().sort((a,b)=>n(a.rank)-n(b.rank)||a.name.localeCompare(b.name,'ru'));
-    const html=`<h2>✎ Редактор рейтинга</h2><div class="muted">${names[weight]||weight}. Меняй позиции и чемпиона — рекорд, серии и защиты не трогаются.</div>${fighters.map(f=>`<div class="card" style="margin-top:8px"><b>${flag(f)} ${f.name}</b><label>Позиция</label><input id="rr_${f.id}" type="number" min="1" max="999" value="${n(f.rank)}"><label><input id="rc_${f.id}" type="checkbox" ${f.champion?'checked':''}> Чемпион</label></div>`).join('')}<button class="primary" onclick="saveRankingEditor()">СОХРАНИТЬ РЕЙТИНГ</button>`;
-    document.getElementById('modalContent').innerHTML=html;
-    document.getElementById('modal').classList.add('show');
-  };
-
-  window.saveRankingEditor=function(){
-    if(typeof weight==='undefined'||weight==='P4P')return;
-    const fighters=F.filter(f=>f.weight===weight);
-    let championId=null;
-    fighters.forEach(f=>{
-      const rank=document.getElementById('rr_'+f.id);
-      const champ=document.getElementById('rc_'+f.id);
-      if(rank)f.rank=Math.max(1,n(rank.value));
-      if(champ&&champ.checked)championId=f.id;
-    });
-    fighters.forEach(f=>{
-      const should=f.id===championId;
-      if(should&&!f.champion)f.activeDefenses=0;
-      f.champion=should;
-    });
-    saveNow();
-    closeModal();
-    render();
-  };
-
-  window.saveP4PEditor=function(){
-    if(typeof weight==='undefined'||weight!=='P4P')return;
-    const fighters=p4p();
-    fighters.forEach((f,i)=>{
-      const input=document.getElementById('p4p_'+encodeURIComponent(f.name));
-      if(!input)return;
-      const rank=Math.max(1,n(input.value));
-      // P4P rank belongs to the fighter identity, so update every weight record with the same name.
-      F.filter(x=>x.name.trim().toLowerCase()===f.name.trim().toLowerCase()).forEach(x=>x.p4pRank=rank);
-    });
-    saveNow();
-    closeModal();
-    render();
-  };
-
-  const oldRank=window.rank;
-  window.rank=function(m){
-    oldRank(m);
-    const card=m.querySelector('.card');
-    if(card)card.insertAdjacentHTML('beforeend','<button class="primary" style="margin-top:10px" onclick="openRankingEditor()">✎ РЕДАКТИРОВАТЬ РЕЙТИНГ</button>');
-  };
-
-  // P4P: a fighter who is champion in two divisions displays two belts.
-  const oldP4P=window.p4p;
-  window.p4p=function(){
-    const arr=oldP4P();
-    const map=new Map();
-    F.forEach(f=>{
-      const key=f.name.trim().toLowerCase();
-      if(f.champion)map.set(key,(map.get(key)||0)+1);
-    });
-    arr.forEach(f=>f.beltCount=map.get(f.name.trim().toLowerCase())||0);
-    return arr;
-  };
-  const oldRow=window.row;
-  window.row=function(f,pos){
-    let html=oldRow(f,pos);
-    if(f.beltCount>=2)html=html.replace('🏆','🏆🏆');
-    return html;
-  };
-
-  if(typeof render==='function')render();
+const N=v=>{const n=Number(v);return Number.isFinite(n)?n:0},saveDB=()=>typeof save==='function'?save():localStorage.setItem('ratingDB',JSON.stringify(F)),close=()=>typeof closeModal==='function'?closeModal():document.getElementById('modal').classList.remove('show');
+window.p4p=function(){const m=new Map();F.forEach(f=>{const k=f.name.trim().toLowerCase();if(!m.has(k))m.set(k,{name:f.name,country:f.country,wins:0,losses:0,draws:0,titleWins:0,titleDefenses:0,activeDefenses:0,streak:0,championCount:0,p4pRank:null,weights:[]});const x=m.get(k);x.wins+=N(f.wins);x.losses+=N(f.losses);x.draws+=N(f.draws);x.titleWins+=N(f.titleWins);x.titleDefenses+=N(f.titleDefenses);x.activeDefenses+=N(f.activeDefenses);if(Math.abs(N(f.streak))>Math.abs(x.streak))x.streak=N(f.streak);if(f.champion)x.championCount++;if(!x.weights.includes(f.weight))x.weights.push(f.weight);if(f.p4pRank){const r=N(f.p4pRank);if(r>0&&(x.p4pRank==null||r<x.p4pRank))x.p4pRank=r}});const score=x=>x.championCount*300+x.titleDefenses*25+x.activeDefenses*35+x.titleWins*35+x.wins*2-x.losses*2+(x.streak>0?x.streak*18:x.streak*12);return[...m.values()].sort((a,b)=>{const ar=a.p4pRank||999,br=b.p4pRank||999;return ar!==br?ar-br:score(b)-score(a)||b.wins-a.wins})};
+window.openP4PEditor=function(){const a=p4p();document.getElementById('modalContent').innerHTML='<h2>✎ Редактор P4P</h2><div class="muted">Позиция P4P хранится отдельно от весового рейтинга.</div>'+a.map((f,i)=>`<div class="card"><b>${flag({country:f.country})} ${f.name}</b><div class="muted">${f.wins}-${f.losses}-${f.draws} · ${f.championCount?'🏆'.repeat(Math.min(3,f.championCount)):'без пояса'}</div><label>P4P позиция</label><input class="p4" data-n="${encodeURIComponent(f.name)}" type="number" min="1" value="${f.p4pRank||i+1}"></div>`).join('')+'<div style="position:sticky;bottom:0;background:#111315;padding:10px 0"><button class="primary" onclick="saveP4PEditor()">СОХРАНИТЬ P4P</button></div>';document.getElementById('modal').classList.add('show')};
+window.saveP4PEditor=function(){document.querySelectorAll('.p4').forEach(e=>{const k=decodeURIComponent(e.dataset.n).trim().toLowerCase(),r=Math.max(1,N(e.value));F.filter(f=>f.name.trim().toLowerCase()===k).forEach(f=>f.p4pRank=r)});saveDB();close();render()};
+window.openRankingEditor=function(){if(weight==='P4P')return openP4PEditor();const a=F.filter(f=>f.weight===weight).sort((x,y)=>(N(x.rank)||999)-(N(y.rank)||999)||x.name.localeCompare(y.name,'ru'));document.getElementById('modalContent').innerHTML=`<h2>✎ ${names[weight]} — рейтинг</h2><div class="muted">Позиции и чемпионство.</div>`+a.map(f=>`<div class="card"><b>${flag(f)} ${f.name}</b><div class="muted">${f.wins}-${f.losses}-${f.draws}</div><label>Позиция</label><input class="rp" data-id="${f.id}" type="number" min="1" value="${N(f.rank)||999}"><label><input class="rc" data-id="${f.id}" type="checkbox" ${f.champion?'checked':''}> Чемпион</label></div>`).join('')+'<div style="position:sticky;bottom:0;background:#111315;padding:10px 0"><button class="primary" onclick="saveRankingEditor()">СОХРАНИТЬ РЕЙТИНГ</button></div>';document.getElementById('modal').classList.add('show')};
+window.saveRankingEditor=function(){if(weight==='P4P')return saveP4PEditor();document.querySelectorAll('.rp').forEach(e=>{const f=F.find(x=>x.id==e.dataset.id);if(f)f.rank=Math.max(1,N(e.value)||999)});let c=null;document.querySelectorAll('.rc').forEach(e=>{if(e.checked)c=F.find(x=>x.id==e.dataset.id)});F.filter(f=>f.weight===weight).forEach(f=>{const on=c&&f.id===c.id;if(on&&!f.champion)f.activeDefenses=0;f.champion=!!on});saveDB();close();render()};
+window.editFighter=function(id){const f=F.find(x=>x.id===id);if(!f)return;document.getElementById('modalContent').innerHTML=`<h2>✎ ${flag(f)} ${f.name}</h2><label>Вес</label><select id="ew">${W.filter(x=>x!=='P4P').map(w=>`<option value="${w}" ${f.weight===w?'selected':''}>${names[w]}</option>`).join('')}</select><label>Победы</label><input id="ewin" type="number" min="0" value="${N(f.wins)}"><label>Поражения</label><input id="elos" type="number" min="0" value="${N(f.losses)}"><label>Ничьи</label><input id="edr" type="number" min="0" value="${N(f.draws)}"><label>Серия (+/-)</label><input id="est" type="number" value="${N(f.streak)}"><label>Общие защиты</label><input id="etd" type="number" min="0" value="${N(f.titleDefenses)}"><label>Активная серия защит</label><input id="ead" type="number" min="0" value="${N(f.activeDefenses)}"><label>Завоеваний пояса</label><input id="etw" type="number" min="0" value="${N(f.titleWins)}"><label>Позиция в весе</label><input id="erp" type="number" min="1" value="${N(f.rank)||999}"><label>P4P позиция</label><input id="epp" type="number" min="1" value="${f.p4pRank||''}"><label><input id="ech" type="checkbox" ${f.champion?'checked':''}> Чемпион</label><div style="position:sticky;bottom:0;background:#111315;padding:10px 0"><button class="primary" onclick="saveFighterEdit(${id})">СОХРАНИТЬ БОЙЦА</button></div>`;document.getElementById('modal').classList.add('show')};
+window.saveFighterEdit=function(id){const f=F.find(x=>x.id===id);if(!f)return;f.weight=document.getElementById('ew').value;f.wins=N(document.getElementById('ewin').value);f.losses=N(document.getElementById('elos').value);f.draws=N(document.getElementById('edr').value);f.streak=N(document.getElementById('est').value);f.titleDefenses=N(document.getElementById('etd').value);f.activeDefenses=N(document.getElementById('ead').value);f.titleWins=N(document.getElementById('etw').value);f.rank=Math.max(1,N(document.getElementById('erp').value)||999);const p=N(document.getElementById('epp').value);f.p4pRank=p>0?p:null;f.champion=document.getElementById('ech').checked;saveDB();close();render()};
+const oldRank=window.rank;window.rank=function(m){oldRank(m);const c=m.querySelector('.card');if(c){const b=document.createElement('button');b.className='primary';b.style.marginTop='10px';b.textContent='✎ РЕДАКТИРОВАТЬ РЕЙТИНГ';b.onclick=openRankingEditor;c.appendChild(b)}};
+const oldRow=window.row;window.row=function(f,pos){let h=oldRow(f,pos);if(f.championCount>=2)h=h.replace('🏆','🏆🏆');return h};
+window.addFight=function(){const s=document.getElementById('bf')||document.getElementById('f'),r=document.getElementById('br')||document.getElementById('r');if(!s||!r)return;const f=F.find(x=>x.id==s.value);if(!f)return;const v=r.value,res=(v==='W'||v==='1'||v==='WIN')?'WIN':(v==='L'||v==='0'||v==='LOSS'?'LOSS':'DRAW'),was=!!f.champion;f.history=f.history||[];if(res==='WIN'){f.wins=N(f.wins)+1;f.streak=f.streak>0?f.streak+1:1;if(was){f.titleDefenses=N(f.titleDefenses)+1;f.activeDefenses=N(f.activeDefenses)+1}}else if(res==='LOSS'){f.losses=N(f.losses)+1;f.streak=f.streak<0?f.streak-1:-1;f.champion=false;f.activeDefenses=0;if(was){const c=F.filter(x=>x.weight===f.weight&&!x.champion&&N(x.streak)>=2).sort((a,b)=>(N(a.rank)||999)-(N(b.rank)||999)||N(b.streak)-N(a.streak))[0];if(c)c.champion=true}f.history.unshift({result:'LOSS',method:document.getElementById('bm')?.value||'',round:document.getElementById('bround')?.value||'',date:new Date().toLocaleDateString('ru-RU')})}else{f.draws=N(f.draws)+1;f.streak=0;f.history.unshift({result:'DRAW',method:document.getElementById('bm')?.value||'',round:document.getElementById('bround')?.value||'',date:new Date().toLocaleDateString('ru-RU')})}saveDB();weight=f.weight;page='rank';render()};
+if(typeof render==='function')render();
 })();
