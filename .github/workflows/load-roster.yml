@@ -26,6 +26,8 @@ jobs:
               tag=f'<script src="{src}"></script>'
               if tag not in s:
                   s=s.replace('</body>',tag+'</body>')
+          logic='''<script>\n(function(){\nfunction score(f){const w=+f.wins||0,l=+f.losses||0,d=+f.draws||0,t=w+l+d,p=t?w/t:0;return w*100000+p*10000-l*3000+(+f.streak||0)*250+(f.champion?500:0)+(+f.titleDefenses||0)*400+(+f.titleWins||0)*300;}\nwindow.ratingRankList=function(a){return [...a].sort((a,b)=>score(b)-score(a)||(b.wins||0)-(a.wins||0)||(a.losses||0)-(b.losses||0)||(b.streak||0)-(a.streak||0)||(a.rank||99)-(b.rank||99));};\nconst old=window.render; if(typeof old==='function'){window.render=function(){W.filter(x=>x!=='P4P').forEach(w=>window.ratingRankList(F.filter(f=>f.weight===w&&!f.champion)).forEach((f,i)=>f.computedRank=i+1));old();};}\n})();\n</script>'''
+          if 'window.ratingRankList' not in s:s=s.replace('</body>',logic+'</body>')
           p.write_text(s,encoding='utf-8')
           PY
       - name: Commit
@@ -33,5 +35,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git diff --cached --quiet || git commit -m 'Add automatic streak and title defense logic'
+          git diff --cached --quiet || git commit -m 'Apply ranking logic to ratings'
           git push
