@@ -1,9 +1,9 @@
-name: Load expanded roster
+name: Inject rating logic
 on:
   push:
     paths:
       - 'roster.js'
-      - 'p4p.js'
+      - 'p4p_logic.js'
       - '.github/workflows/load-roster.yml'
 permissions:
   contents: write
@@ -18,7 +18,7 @@ jobs:
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          for src in ['roster.js','p4p.js']:
+          for src in ['roster.js','p4p_logic.js']:
               tag=f'<script src="{src}"></script>'
               if tag not in s:
                   s=s.replace('</body>',tag+'</body>')
@@ -29,5 +29,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git diff --cached --quiet || git commit -m 'Add unified P4P logic'
+          git diff --cached --quiet || git commit -m 'Fix P4P aggregation and champion ranking'
           git push
