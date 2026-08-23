@@ -3,21 +3,16 @@
   function norm(f){
     f.history=Array.isArray(f.history)?f.history:[];
     f.wins=Number(f.wins)||0; f.losses=Number(f.losses)||0; f.draws=Number(f.draws)||0;
+    f.streak=Number(f.streak)||0;
     f.titleWins=Number(f.titleWins)||0; f.titleDefenses=Number(f.titleDefenses)||0; f.activeDefenses=Number(f.activeDefenses)||0;
     return f;
   }
   F.forEach(norm);
-  function calcStreak(f){
-    let h=f.history||[]; if(!h.length) return Number(f.streak)||0;
-    let s=0;
-    for(let i=h.length-1;i>=0;i--){let r=(h[i].result||h[i].outcome||h[i].res||'').toUpperCase(); if(r==='WIN'||r==='W'||r==='ПОБЕДА'){if(s>=0)s++;else break}else if(r==='LOSS'||r==='L'||r==='ПОРАЖЕНИЕ'){if(s<=0)s--;else break}else break;}
-    return s;
-  }
   function method(h){let m=h.method||h.finish||h.type||h.result_method||'';let r=h.round||h.r||h.rd||'';let mm=String(m).toUpperCase(); if(mm==='KO/TKO'||mm==='KOTKO'||mm==='KO')m='KO'; else if(mm==='SUBMISSION'||mm==='SUB')m='SUB'; else if(mm==='DECISION'||mm==='DEC')m='DEC'; else if(!m)m='DEC'; return `${m}${r?` ${r}R`:''}`;}
   function resultClass(h){let r=String(h.result||h.outcome||'').toUpperCase(); return r==='WIN'||r==='W'||r==='ПОБЕДА'?'historyWin':r==='LOSS'||r==='L'||r==='ПОРАЖЕНИЕ'?'historyLoss':'historyDraw';}
   window.openProfile=function(id){
     const f=norm(F.find(x=>x.id==id)); if(!f)return;
-    const streak=calcStreak(f); f.streak=streak;
+    const streak=f.streak;
     const series=streak>0?`${streak} побед подряд`:streak<0?`${Math.abs(streak)} поражения подряд`:'нет активной серии';
     const h=(f.history||[]).slice().reverse();
     document.getElementById('modalContent').innerHTML=`
@@ -38,7 +33,6 @@
     document.getElementById('modal').classList.add('show'); save();
   };
   window.closeModal=function(){document.getElementById('modal').classList.remove('show')};
-  const oldEdit=window.editFighter;
   window.editFighter=function(id){
     const f=norm(F.find(x=>x.id==id)); if(!f)return;
     document.getElementById('modalContent').innerHTML=`<h2>Редактировать бойца</h2>
