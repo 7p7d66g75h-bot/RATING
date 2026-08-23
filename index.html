@@ -18,4 +18,4 @@ function score(f){const w=+f.wins||0,l=+f.losses||0,d=+f.draws||0,t=w+l+d,p=t?w/
 window.ratingRankList=function(a){return [...a].sort((a,b)=>score(b)-score(a)||(b.wins||0)-(a.wins||0)||(a.losses||0)-(b.losses||0)||(b.streak||0)-(a.streak||0)||(a.rank||99)-(b.rank||99));};
 const old=window.render; if(typeof old==='function'){window.render=function(){W.filter(x=>x!=='P4P').forEach(w=>window.ratingRankList(F.filter(f=>f.weight===w&&!f.champion)).forEach((f,i)=>f.computedRank=i+1));old();};}
 })();
-</script><script src="obvious_streaks.js"></script><script src="persistence_fix.js"></script></body></html>
+</script><script src="obvious_streaks.js"></script><script src="persistence_fix.js"></script><script src="p4p_persistence.js"></script></body></html>
