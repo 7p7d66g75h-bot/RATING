@@ -18,6 +18,7 @@ on:
       - 'final_logic.js'
       - 'ui_hotfix.js'
       - 'stable_logic.js'
+      - 'button_cleanup.js'
       - '.github/workflows/load-roster.yml'
 permissions:
   contents: write
@@ -32,7 +33,7 @@ jobs:
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          for src in ['roster.js','p4p_logic.js','profile.js','legacy_stats.js','data_migration.js','fight_logic.js','obvious_streaks.js','persistence_fix.js','p4p_persistence.js','live_fix.js','add_search.js','restore_roster.js','ranking_editor.js','final_logic.js','ui_hotfix.js','stable_logic.js']:
+          for src in ['roster.js','p4p_logic.js','profile.js','legacy_stats.js','data_migration.js','fight_logic.js','obvious_streaks.js','persistence_fix.js','p4p_persistence.js','live_fix.js','add_search.js','restore_roster.js','ranking_editor.js','final_logic.js','ui_hotfix.js','stable_logic.js','button_cleanup.js']:
               tag=f'<script src="{src}"></script>'
               if tag not in s:
                   s=s.replace('</body>',tag+'</body>')
@@ -43,5 +44,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git diff --cached --quiet || git commit -m 'Load stable final logic last'
+          git diff --cached --quiet || git commit -m 'Load button cleanup last'
           git push
