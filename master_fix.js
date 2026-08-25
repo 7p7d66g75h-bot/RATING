@@ -23,6 +23,6 @@ window.masterSaveWeight=()=>{backup('Перед сохранением рейт�
 const oldRender=window.render;window.render=function(){const m=document.getElementById('main');if(page==='rank'){if(weight==='P4P')p4pMasterRank(m);else masterWeight(m);document.getElementById('weights').innerHTML=W.map(x=>`<button class="${weight===x?'on':''}" onclick="weight='${x}';page='rank';editMode=false;render()">${x==='P4P'?x:names[x]}</button>`).join('');return}return oldRender.apply(this,arguments)};
 const oldSaveEdit=window.saveEdit;window.saveEdit=function(id){backup('Перед редактированием бойца');oldSaveEdit.apply(this,arguments);saveDB()};
 if(!localStorage.getItem('integrity_v18')){const p=F.filter(f=>f.name==='Алекс Перейра');if(p.length&&p.reduce((s,f)=>s+f.wins,0)===9){const target=p.find(f=>f.weight==='Light Heavyweight');if(target)target.wins=7}localStorage.setItem('integrity_v18','1');saveDB()}
-/* v19 is loaded after every older override. It owns the initial screen and P4P renderer. */
-const stable=document.createElement('script');stable.src='stabilizer_v19.js?v=19';document.body.appendChild(stable);
+/* v20: load the stable layer with a cache-busting URL. */
+const stable=document.createElement('script');stable.src='stabilizer_v19.js?v=20';document.body.appendChild(stable);
 })();
